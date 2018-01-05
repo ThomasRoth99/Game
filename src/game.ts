@@ -23,6 +23,8 @@ class Game {
 
     isOn : boolean;
 
+    allItems : Array<String> = [];
+
     /**
      * Create the game and initialise its internal map.
      */
@@ -39,47 +41,62 @@ class Game {
      */
     createRooms() : void {
         // create the rooms
-        let outside = new Room("outside the main entrance of the university");
-        let theater = new Room("in a lecture theater");
-        let pub = new Room("in the campus pub");
-        let lab = new Room("in a computing lab");
-        let office = new Room("in the computing admin office");
+        let Dungeon = new Room("stuck in the dungeon of this castle, see if you can find a way out");
+        let Staircase = new Room("You are at the staircase now");
+        let MainHall = new Room("You are now in the main hall");
+        let SecondFloor = new Room("You are at the second floor, at your right you see a kitchen");
+        let Kitchen = new Room("You are at the kitchen but watchout for the cook, he is always wandering around in his kitchen");
+        let BaronOffice = new Room("You used the steak to get the guards distracted! Now quickly grab the key before they come back");
+        let Courtyard = new Room ("You are at the courtyard, a big open space. Watchout because guards may sneak up on you")
+        let Smithy = new Room ("You are at the smithy. Their are always people guarding this place")
+        let Stables = new Room ("You are now at the stables")
+        let MainGate = new Room ("You are at the main gate, the best way of getting out of here is through this gate")
+        let Freedom = new Room ("You escaped the castle! U are free now. Hit F5 to restart the game. Thanks for playing!")
 
         // initialise room exits
-        outside.setExits(null, theater, lab, pub);
-        theater.setExits(null, null, null, outside);
-        pub.setExits(null, outside, null, null);
-        lab.setExits(outside, office, null, null);
-        office.setExits(null, null, null, lab);
+        Dungeon.addDoor("north", new Door(Staircase));
+        Staircase.addDoor("east", new Door(MainHall));
+        Staircase.addDoor("west", new Door(SecondFloor));
+        MainHall.addDoor("east", new Door(Courtyard));
+        MainHall.addDoor("south", new LockedDoorFood(BaronOffice));
+        MainHall.addDoor("west", new Door(Staircase));
+        SecondFloor.addDoor("north", new Door(Kitchen)); 
+        SecondFloor.addDoor("east", new Door(Staircase));
+        Kitchen.addDoor("south", new Door(SecondFloor));
+        BaronOffice.addDoor("north", new Door(MainHall)); 
+        Courtyard.addDoor("north", new Door(Smithy));
+        Courtyard.addDoor("east", new Door(MainGate));
+        Courtyard.addDoor("south", new LockedDoorKey(Stables));
+        Courtyard.addDoor("west", new Door(MainHall)); 
+        Smithy.addDoor("south", new Door(Courtyard));
+        Stables.addDoor("north", new Door(Courtyard));
+        MainGate.addDoor("west", new Door(Courtyard));
+        MainGate.addDoor("east", new LockedDoorHorse(Freedom));
+
+        //items
+        Stables.inventory = new Items("horse");
+        BaronOffice.inventory = new Items("key");
+        Kitchen.inventory = new Items("steak");
+
 
         // spawn player outside
-        this.currentRoom = outside;
+        this.currentRoom = Dungeon;
     }
 
     /**
      * Print out the opening message for the player.
      */
-    printWelcome() : void {
+     printWelcome() : void {
         this.out.println();
-        this.out.println("Welcome to the Zorld of Wuul!");
-        this.out.println("Zorld of Wuul is a new, incredibly boring adventure game.");
-        this.out.println("Type 'help' if you need help.");
-        this.out.println();
+        this.out.println("Welcome to Castle Escape!");
+        this.out.println("Try to find your way out of this castle");
+        this.out.println("Search items to help you in your escape")
         this.out.println("You are " + this.currentRoom.description);
-        this.out.print("Exits: ");
-        if(this.currentRoom.northExit != null) {
-            this.out.print("north ");
-        }
-        if(this.currentRoom.eastExit != null) {
-            this.out.print("east ");
-        }
-        if(this.currentRoom.southExit != null) {
-            this.out.print("south ");
-        }
-        if(this.currentRoom.westExit != null) {
-            this.out.print("west ");
-        }
+        this.out.println("Exits: north");
         this.out.println();
+        this.out.println("There is a " + this.currentRoom.inventory.description + " here");
+        this.out.print("Actions: ");
+        this.out.println(this.currentRoom.getDoors().join(" "));
         this.out.print(">");
     }
 
@@ -101,7 +118,7 @@ class Game {
         this.out.println("I don't know what you mean...");
         this.out.println();
         this.out.println("Your command words are:");
-        this.out.println("   go quit help");
+        this.out.println("   go quit help get look show");
         return false;
     }
 
@@ -118,11 +135,9 @@ class Game {
             this.out.println("Help what?");
             return false;
         }
-        this.out.println("You are lost. You are alone. You wander");
-        this.out.println("around at the university.");
         this.out.println();
         this.out.println("Your command words are:");
-        this.out.println("   go quit help");
+        this.out.println("   go quit help get look show");
         return false;
     }
 
@@ -133,7 +148,7 @@ class Game {
      * @param params array containing all parameters
      * @return true, if this command quits the game, false otherwise.
      */
-    goRoom(params : string[]) : boolean {
+   goRoom(params : string[]) : boolean {
         if(params.length == 0) {
             // if there is no second word, we don't know where to go...
             this.out.println("Go where?");
@@ -143,45 +158,111 @@ class Game {
         let direction = params[0];
 
         // Try to leave current room.
-        let nextRoom = null;
-        switch (direction) {
-            case "north" : 
-                nextRoom = this.currentRoom.northExit;
-                break;
-            case "east" : 
-                nextRoom = this.currentRoom.eastExit;
-                break;
-            case "south" : 
-                nextRoom = this.currentRoom.southExit;
-                break;
-            case "west" : 
-                nextRoom = this.currentRoom.westExit;
-                break;
+        let door = this.currentRoom.getDoor(direction);
+
+        try {
+            door.enter(this.allItems);
+        }
+        catch (e) {
+            if(e instanceof LockedDoor) {
+                this.out.println(e.message);
+                return false;
+            }
+            throw e;
         }
 
-        if (nextRoom == null) {
-            this.out.println("There is no door!");
+        if (door == null) {
+            this.out.println("There is no exit " + door + "!");
+            return false;
+        }
+
+        this.currentRoom = door.exit;
+        this.out.println("" + this.currentRoom.description);
+        if (this.currentRoom.inventory == null) {
+            this.out.println("There are no items in this room");
         }
         else {
-            this.currentRoom = nextRoom;
-            this.out.println("You are " + this.currentRoom.description);
-            this.out.print("Exits: ");
-            if(this.currentRoom.northExit != null) {
-                this.out.print("north ");
-            }
-            if(this.currentRoom.eastExit != null) {
-                this.out.print("east ");
-            }
-            if(this.currentRoom.southExit != null) {
-                this.out.print("south ");
-            }
-            if(this.currentRoom.westExit != null) {
-                this.out.print("west ");
-            }
-            this.out.println();
+            console.log(this.currentRoom);
+            this.out.println("There is a " + this.currentRoom.inventory.description + " here");
         }
+        this.out.print("Exits: ");
+        this.out.println(this.currentRoom.getDoors().join(" "));
+
+
         return false;
     }
+
+
+     getItem(params : string[]) : boolean {
+        
+
+        if(this.currentRoom.inventory == null){
+            this.out.println("No items in this room, perhaps you find items in other room");
+            return;
+        }
+
+        if(params.length == 0) {
+            // if there is no second word, we don't know where to go...
+            this.out.println("Get what?");
+            return;
+        }
+
+        let yourItem = params[0];
+
+        let nextItem = null;
+        switch (yourItem) {
+            case("horse") :
+                this.allItems.push(this.currentRoom.inventory.description);
+                this.currentRoom.inventory = null;
+                break;
+            case("key") :
+                this.allItems.push(this.currentRoom.inventory.description);
+                this.currentRoom.inventory = null;
+                break;
+            case("steak") :
+                this.allItems.push(this.currentRoom.inventory.description);
+                this.currentRoom.inventory = null;
+                break;
+        }
+        this.out.print("You picked up a " + this.allItems);
+        this.out.println();
+
+        console.log(this.allItems);
+        return false;
+    }
+
+    showItem(params : string[]) : boolean {
+
+        let allItems = params[0];
+
+        if(this.allItems != null){
+            this.out.print("You're items: " + this.allItems);
+            this.out.println();
+        }
+        else {
+            this.out.print("You don't have items");
+            this.out.println();
+        }
+        console.log(this.allItems);
+        return false;
+    }
+
+    lookRoom(params : string[]) : boolean {
+        this.out.print(this.currentRoom.description);
+        this.out.println();
+        if (this.currentRoom.inventory == null) {
+            this.out.println("No items in this room, perhaps you find items in other room");
+        }
+        else {
+            console.log(this.currentRoom);
+            this.out.println("In this room there is a " + this.currentRoom.inventory.description);
+        }
+        this.out.print("Actions: ");
+        this.out.println(this.currentRoom.getDoors().join(" "));
+        return false;
+    }
+
+
     
     /** 
      * "Quit" was entered. Check the rest of the command to see

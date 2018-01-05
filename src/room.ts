@@ -15,10 +15,9 @@
 class Room {
     description : string;
 
-    northExit : Room;
-    southExit : Room;
-    eastExit : Room;
-    westExit : Room;
+    inventory : Items;
+
+    doors: { [key: string]: Door; } = {};
 
     /**
      * Create a room described "description". Initially, it has
@@ -38,20 +37,33 @@ class Room {
      * @param south The south exit.
      * @param west The west exit.
      */
-    setExits(north : Room, east : Room, south : Room, west : Room) : void {
+     setDoors(north : Room, east : Room, south : Room, west : Room) : void {
         if(north != null) {
-            this.northExit = north;
+            this.addDoor("north", new Door(north));
         }
         if(east != null) {
-            this.eastExit = east;
+            this.addDoor("east", new Door(east));
         }
         if(south != null) {
-            this.southExit = south;
+            this.addDoor("south", new Door(south));
         }
         if(west != null) {
-            this.westExit = west;
+            this.addDoor("west", new Door(west));
         }
     }
 
+     addDoor(alias : string, exit : Door) {
+        this.doors[alias] = exit;
+    }
+
+    getDoors() : Array<string> {
+        return Object.keys(this.doors);
+    }
+
+    getDoor(alias : string) : Door {
+       return this.doors[alias];
+    }
+
 }
+
 
