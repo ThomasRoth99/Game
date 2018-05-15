@@ -1,6 +1,6 @@
 interface IEnemy{ 
-    makeSound(): void;
-    eatPerson(food: string): void;
+    makeSound(): string;
+    eatPerson(food: string): string;
 }
 
 function testEnemy(Enemy: IEnemy): void {
@@ -9,26 +9,24 @@ function testEnemy(Enemy: IEnemy): void {
 }
 
 abstract class Enemy implements IEnemy {
-    abstract makeSound(): void;
+    abstract makeSound(): string;
 
-    eatPerson(food: string): void {
-        console.log('Jummie Jummie' + food);
+    eatPerson(food: string): string {
+        return('Jummie Jummie' + food);
     }
 }
 
 class Ghost extends Enemy {
-    makeSound(): void {
-        console.log('Booooh');
+    makeSound(): string {
+        return(' Ghost says Booooh!!!');
     }
     
-    eatPerson(food: string): void{
+    eatPerson(food: string): string{
         if (food !== 'Person') {
-            console.log('This is bad meat');
-            return;
+            return('This is bad meat');
         }
 
-        super.eatPerson(food);
+        this.eatPerson(food);
     }
 }
 
-testEnemy(new Ghost());

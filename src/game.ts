@@ -25,6 +25,8 @@ class Game {
 
     allItems : Array<String> = [];
 
+    ghost = new Ghost();
+
     /**
      * Create the game and initialise its internal map.
      */
@@ -35,6 +37,7 @@ class Game {
         this.createRooms();
         this.printWelcome();
     }
+        
 
     /**
      * Create all the rooms and link their exits together.
@@ -43,7 +46,7 @@ class Game {
         // create the rooms
         let Dungeon = new Room("stuck in the dungeon of this castle, see if you can find a way out");
         let Staircase = new Room("You are at the staircase now");
-        let MainHall = new Room("You are now in the main hall");
+        let MainHall = new Room("You are now in the main hall" + this.ghost.makeSound());
         let SecondFloor = new Room("You are at the second floor, at your right you see a kitchen");
         let Kitchen = new Room("You are at the kitchen but watchout for the cook, he is always wandering around in his kitchen");
         let BaronOffice = new Room("You used the steak to get the guards distracted! Now quickly grab the key before they come back");
@@ -261,6 +264,8 @@ class Game {
         this.out.println(this.currentRoom.getDoors().join(" "));
         return false;
     }
+
+
 
 
     
